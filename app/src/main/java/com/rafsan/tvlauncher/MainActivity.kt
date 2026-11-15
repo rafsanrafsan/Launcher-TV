@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.ResolveInfo
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Typeface
@@ -23,6 +24,7 @@ import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -50,6 +52,12 @@ class MainActivity : Activity() {
     private lateinit var cctvSurface: TextureView
     private lateinit var appRow: LinearLayout
     private var cctv: CctvPlayer? = null
+    private lateinit var cpuText: TextView
+    private lateinit var cpuBar: ProgressBar
+    private lateinit var ramText: TextView
+    private lateinit var ramBar: ProgressBar
+    private lateinit var diskText: TextView
+    private lateinit var diskBar: ProgressBar
 
     private var wallpaperFiles: List<File> = emptyList()
     private var wallpaperIndex = 0
@@ -68,6 +76,12 @@ class MainActivity : Activity() {
         override fun run() {
             loadWidgets()
             ui.postDelayed(this, 15 * 60 * 1000L)
+        }
+    }
+    private val sysTick = object : Runnable {
+        override fun run() {
+            updateSystem()
+            ui.postDelayed(this, 5000)
         }
     }
     private val slide = object : Runnable {
@@ -123,6 +137,7 @@ class MainActivity : Activity() {
         started = true
         tick.run()
         refresh.run()
+        sysTick.run()
         prepareWallpapers()
         applyBrightness(Prefs.brightness)
         cctv?.start(Prefs.rtsp)
@@ -138,6 +153,7 @@ class MainActivity : Activity() {
         started = false
         ui.removeCallbacks(tick)
         ui.removeCallbacks(refresh)
+        ui.removeCallbacks(sysTick)
         ui.removeCallbacks(slide)
         cctv?.stop()
     }
@@ -217,9 +233,10 @@ class MainActivity : Activity() {
         widgets.clipChildren = false
         content.addView(widgets, LinearLayout.LayoutParams(-1, dp(170)))
 
-        weatherBody = card(widgets, "CUACA", 210) { loadWidgets() }
-        prayerBody = card(widgets, "JADWAL SHOLAT", 210) { loadWidgets() }
+        weatherBody = card(widgets, "CUACA", 190) { loadWidgets() }
+        prayerBody = card(widgets, "JADWAL SHOLAT", 190) { loadWidgets() }
         prayerBody.typeface = Typeface.MONOSPACE
+        buildSystemCard(widgets)
         buildCctvCard(widgets)
 
         // Baris aplikasi
@@ -299,6 +316,72 @@ class MainActivity : Activity() {
         lp.rightMargin = dp(10)
         parent.addView(box, lp)
         return body
+    }
+
+    private fun buildSystemCard(parent: LinearLayout) {
+        val box = LinearLayout(this)
+        box.orientation = LinearLayout.VERTICAL
+        box.isFocusable = true
+        box.isSoundEffectsEnabled = false
+        box.background = Ui.focusBg(this)
+        box.setPadding(dp(12), dp(10), dp(12), dp(10))
+        val head = text(11f, true)
+        head.text = "SISTEM"
+        head.setTextColor(Color.rgb(255, 200, 87))
+        box.addView(head)
+
+        fun row(): Pair<TextView, ProgressBar> {
+            val label = text(12f, false)
+            label.setPadding(0, dp(8), 0, dp(3))
+            label.maxLines = 1
+            val bar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
+            bar.max = 100
+            bar.progressTintList = ColorStateList.valueOf(Color.rgb(255, 200, 87))
+            bar.progressBackgroundTintList = ColorStateList.valueOf(Color.argb(120, 255, 255, 255))
+            box.addView(label)
+            box.addView(bar, LinearLayout.LayoutParams(-1, dp(5)))
+            return Pair(label, bar)
+        }
+        val cpu = row()
+        cpuText = cpu.first
+        cpuBar = cpu.second
+        val ram = row()
+        ramText = ram.first
+        ramBar = ram.second
+        val disk = row()
+        diskText = disk.first
+        diskBar = disk.second
+
+        box.setOnClickListener {
+            Sfx.select()
+            updateSystem()
+        }
+        val lp = LinearLayout.LayoutParams(dp(190), -1)
+        lp.rightMargin = dp(10)
+        parent.addView(box, lp)
+    }
+
+    private fun updateSystem() {
+        try {
+            val cpu = SysStat.cpuPercent()
+            val temp = SysStat.cpuTemp()
+            val cpuLabel = when {
+                cpu < 0 -> "CPU  tidak terbaca"
+                SysStat.cpuExact -> "CPU  $cpu%"
+                else -> "CPU  ~$cpu%"
+            }
+            cpuText.text = if (temp > 0) "$cpuLabel  ·  $temp°C" else cpuLabel
+            cpuBar.progress = cpu.coerceAtLeast(0)
+
+            val (ramUsed, ramTotal) = SysStat.ram(this)
+            ramText.text = "RAM  $ramUsed / $ramTotal MB"
+            ramBar.progress = if (ramTotal > 0) (ramUsed * 100 / ramTotal).toInt() else 0
+
+            val (diskUsed, diskTotal) = SysStat.storage()
+            diskText.text = String.format(Locale.US, "Disk  %.1f / %.1f GB", diskUsed / 1024.0, diskTotal / 1024.0)
+            diskBar.progress = if (diskTotal > 0) (diskUsed * 100 / diskTotal).toInt() else 0
+        } catch (_: Exception) {
+        }
     }
 
     private fun buildCctvCard(parent: LinearLayout) {

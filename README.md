@@ -5,7 +5,7 @@ Launcher Android TV buatan sendiri untuk Hisense 40E5G (Android 11, RAM 1GB). Ri
 ## Fitur
 
 - Wallpaper slideshow (bawaan: 3 foto singa jantan dari Wikimedia Commons, bisa diganti)
-- Widget cuaca, jadwal sholat, dan live CCTV (RTSP)
+- Widget cuaca, jadwal sholat, status sistem (CPU, RAM, penyimpanan), dan live CCTV (RTSP)
 - Popup kecerahan dengan slider (tombol **Kecerahan** atau tombol MENU di remote)
 - Suara navigasi dan klik
 - Baris aplikasi terpasang (tahan OK pada aplikasi untuk membuka info aplikasinya)
