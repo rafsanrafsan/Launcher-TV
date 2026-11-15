@@ -5,7 +5,7 @@ Launcher Android TV buatan sendiri untuk Hisense 40E5G (Android 11, RAM 1GB). Ri
 ## Fitur
 
 - Wallpaper slideshow (bawaan: 3 foto singa jantan dari Wikimedia Commons, bisa diganti)
-- Widget cuaca, jadwal sholat, jadwal bola, berita, dan live CCTV (RTSP)
+- Widget cuaca, jadwal sholat, dan live CCTV (RTSP)
 - Popup kecerahan dengan slider (tombol **Kecerahan** atau tombol MENU di remote)
 - Suara navigasi dan klik
 - Baris aplikasi terpasang (tahan OK pada aplikasi untuk membuka info aplikasinya)
@@ -31,7 +31,7 @@ Launcher Android TV buatan sendiri untuk Hisense 40E5G (Android 11, RAM 1GB). Ri
 
 ## Atur
 
-Semua setelan ada di tombol **Pengaturan** di launcher: kota, negara, alamat RSS, kode liga, alamat RTSP, URL wallpaper, dan suara. Setelan disimpan di TV, tidak ada yang masuk ke repo ini.
+Semua setelan ada di tombol **Pengaturan** di launcher: kota, negara, alamat RTSP, URL wallpaper, dan suara. Setelan disimpan di TV, tidak ada yang masuk ke repo ini.
 
 Foto wallpaper sendiri (menggantikan URL):
 
@@ -44,6 +44,6 @@ Suara sendiri (menggantikan suara bawaan): taruh `nav.wav` dan `select.wav` di `
 ## Catatan
 
 - Kecerahan: Android TV tidak membuka kontrol backlight panel ke aplikasi biasa, jadi slider ini meredupkan gambar lewat lapisan gelap di atas layar. Backlight asli tetap diatur dari menu Picture TV.
-- Sumber data: Open-Meteo (cuaca), Aladhan metode Kemenag (sholat), scoreboard publik ESPN (bola), RSS (berita).
+- Sumber data: Open-Meteo (cuaca), Aladhan metode Kemenag (sholat).
 - Foto bawaan dimuat langsung dari Wikimedia Commons saat launcher jalan (tidak disimpan di repo): "Male Lion 057" (Ltshears), "Lion (Panthera leo) (30941994012)" (Bernard Dupont), dan "Male lion, South Africa". Lisensi tiap foto ada di halaman Commons masing-masing.
 - `keystore/debug.jks` adalah kunci debug publik, hanya supaya update APK bisa menimpa versi lama. Jangan dipakai untuk rilis ke orang lain.

@@ -42,8 +42,6 @@ object Prefs {
 
     val city get() = str("city", "Jakarta")
     val country get() = str("country", "Indonesia")
-    val rss get() = str("rss", "https://www.antaranews.com/rss/terkini.xml")
-    val league get() = str("league", "eng.1")
     val rtsp get() = str("rtsp", "")
     val slideSec get() = int("slideSec", 60)
     val sfx get() = bool("sfx", true)

@@ -1,20 +1,11 @@
 package com.rafsan.tvlauncher
 
-import android.util.Xml
 import org.json.JSONObject
-import org.xmlpull.v1.XmlPullParser
-import java.io.StringReader
 import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 /** Pengambil data widget. Semua fungsi dipanggil dari thread latar dan mengembalikan teks siap tampil. */
 object Data {
-    private val idLocale = Locale("id", "ID")
-
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 
     // ---------- Cuaca (Open-Meteo, tanpa API key) ----------
@@ -84,91 +75,5 @@ object Data {
             sb.append(if (isNext) "▶ " else "   ").append(label.padEnd(8)).append(time).append('\n')
         }
         return sb.toString().trimEnd()
-    }
-
-    // ---------- Jadwal bola (scoreboard publik ESPN) ----------
-    fun football(league: String): String {
-        val day = SimpleDateFormat("yyyyMMdd", Locale.US)
-        val cal = Calendar.getInstance()
-        val from = day.format(cal.time)
-        cal.add(Calendar.DAY_OF_YEAR, 7)
-        val to = day.format(cal.time)
-        val j = JSONObject(
-            Net.text("https://site.api.espn.com/apis/site/v2/sports/soccer/" + enc(league) + "/scoreboard?dates=$from-$to")
-        )
-        val leagueName = j.optJSONArray("leagues")?.optJSONObject(0)?.optString("abbreviation", "") ?: ""
-        val events = j.optJSONArray("events")
-        if (events == null || events.length() == 0) return "Tidak ada laga 7 hari ke depan\n($league)"
-        val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US)
-        inFmt.timeZone = TimeZone.getTimeZone("UTC")
-        val outFmt = SimpleDateFormat("EEE HH:mm", idLocale)
-        val sb = StringBuilder()
-        if (leagueName.isNotEmpty()) sb.append(leagueName).append('\n')
-        var shown = 0
-        for (i in 0 until events.length()) {
-            if (shown >= 5) break
-            val e = events.optJSONObject(i) ?: continue
-            val comp = e.optJSONArray("competitions")?.optJSONObject(0) ?: continue
-            val teams = comp.optJSONArray("competitors") ?: continue
-            var home = "?"
-            var away = "?"
-            var homeScore = ""
-            var awayScore = ""
-            for (k in 0 until teams.length()) {
-                val c = teams.optJSONObject(k) ?: continue
-                val team = c.optJSONObject("team")
-                var name = team?.optString("abbreviation", "") ?: ""
-                if (name.isEmpty()) name = team?.optString("shortDisplayName", "?") ?: "?"
-                if (c.optString("homeAway") == "home") {
-                    home = name
-                    homeScore = c.optString("score", "")
-                } else {
-                    away = name
-                    awayScore = c.optString("score", "")
-                }
-            }
-            val state = e.optJSONObject("status")?.optJSONObject("type")?.optString("state", "pre") ?: "pre"
-            val line = if (state == "pre") {
-                val whenText = try {
-                    val d: Date? = inFmt.parse(e.optString("date"))
-                    if (d != null) outFmt.format(d) else ""
-                } catch (_: Exception) {
-                    ""
-                }
-                "$whenText  $home v $away"
-            } else {
-                val tag = if (state == "in") "LIVE" else "FT"
-                "$tag  $home $homeScore-$awayScore $away"
-            }
-            sb.append(line.trim()).append('\n')
-            shown++
-        }
-        return sb.toString().trimEnd()
-    }
-
-    // ---------- Berita (RSS) ----------
-    fun news(rssUrl: String): String {
-        val xml = Net.text(rssUrl)
-        val parser = Xml.newPullParser()
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-        parser.setInput(StringReader(xml))
-        val titles = ArrayList<String>()
-        var inItem = false
-        var event = parser.eventType
-        while (event != XmlPullParser.END_DOCUMENT && titles.size < 5) {
-            if (event == XmlPullParser.START_TAG) {
-                val name = parser.name
-                if (name == "item" || name == "entry") {
-                    inItem = true
-                } else if (inItem && name == "title") {
-                    val title = parser.nextText().trim()
-                    if (title.isNotEmpty()) titles.add("• $title")
-                }
-            } else if (event == XmlPullParser.END_TAG) {
-                if (parser.name == "item" || parser.name == "entry") inItem = false
-            }
-            event = parser.next()
-        }
-        return if (titles.isEmpty()) "Tidak ada berita" else titles.joinToString("\n")
     }
 }

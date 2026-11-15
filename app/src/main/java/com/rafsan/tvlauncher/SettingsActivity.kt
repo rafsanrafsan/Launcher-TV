@@ -41,12 +41,6 @@ class SettingsActivity : Activity() {
         field("city", "Kota", Prefs.city, "contoh: Jakarta, Bandung, Surabaya")
         field("country", "Negara", Prefs.country, "")
 
-        section("Berita")
-        field("rss", "Alamat RSS", Prefs.rss, "alamat feed RSS situs berita")
-
-        section("Jadwal bola")
-        field("league", "Kode liga", Prefs.league, "eng.1 Inggris · esp.1 Spanyol · ita.1 Italia · idn.1 Indonesia · uefa.champions")
-
         section("CCTV")
         field("rtsp", "Alamat RTSP", Prefs.rtsp, "rtsp://user:password@192.168.1.10:554/... (pakai sub-stream biar ringan)")
 

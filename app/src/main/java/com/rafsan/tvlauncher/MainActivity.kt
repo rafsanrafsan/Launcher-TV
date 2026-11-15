@@ -46,8 +46,6 @@ class MainActivity : Activity() {
     private lateinit var date: TextView
     private lateinit var weatherBody: TextView
     private lateinit var prayerBody: TextView
-    private lateinit var footballBody: TextView
-    private lateinit var newsBody: TextView
     private lateinit var cctvStatus: TextView
     private lateinit var cctvSurface: TextureView
     private lateinit var appRow: LinearLayout
@@ -102,13 +100,13 @@ class MainActivity : Activity() {
     /**
      * Mengisi setelan lewat adb tanpa mengetik di TV, contoh:
      * adb shell "am start -n com.rafsan.tvlauncher/.MainActivity --es rtsp 'rtsp://...'"
-     * Kunci yang diterima: city, country, rss, league, rtsp, wp1, wp2, wp3.
+     * Kunci yang diterima: city, country, rtsp, wp1, wp2, wp3.
      */
     private fun importConfig(intent: Intent?): Boolean {
         val extras = intent?.extras ?: return false
         var changed = false
         Prefs.edit {
-            for (key in listOf("city", "country", "rss", "league", "rtsp", "wp1", "wp2", "wp3")) {
+            for (key in listOf("city", "country", "rtsp", "wp1", "wp2", "wp3")) {
                 val value = extras.getString(key)
                 if (value != null) {
                     putString(key, value.trim())
@@ -219,13 +217,9 @@ class MainActivity : Activity() {
         widgets.clipChildren = false
         content.addView(widgets, LinearLayout.LayoutParams(-1, dp(170)))
 
-        weatherBody = card(widgets, "CUACA", 1f) { loadWidgets() }
-        prayerBody = card(widgets, "JADWAL SHOLAT", 1f) { loadWidgets() }
+        weatherBody = card(widgets, "CUACA", 210) { loadWidgets() }
+        prayerBody = card(widgets, "JADWAL SHOLAT", 210) { loadWidgets() }
         prayerBody.typeface = Typeface.MONOSPACE
-        footballBody = card(widgets, "JADWAL BOLA", 1.25f) { loadWidgets() }
-        newsBody = card(widgets, "BERITA", 1.6f) { loadWidgets() }
-        newsBody.maxLines = 7
-        newsBody.ellipsize = TextUtils.TruncateAt.END
         buildCctvCard(widgets)
 
         // Baris aplikasi
@@ -281,7 +275,7 @@ class MainActivity : Activity() {
     }
 
     /** Membuat kartu widget, mengembalikan TextView isinya. */
-    private fun card(parent: LinearLayout, title: String, weight: Float, onClick: () -> Unit): TextView {
+    private fun card(parent: LinearLayout, title: String, widthDp: Int, onClick: () -> Unit): TextView {
         val box = LinearLayout(this)
         box.orientation = LinearLayout.VERTICAL
         box.isFocusable = true
@@ -301,7 +295,7 @@ class MainActivity : Activity() {
             Sfx.select()
             onClick()
         }
-        val lp = LinearLayout.LayoutParams(0, -1, weight)
+        val lp = LinearLayout.LayoutParams(dp(widthDp), -1)
         lp.rightMargin = dp(10)
         parent.addView(box, lp)
         return body
@@ -328,7 +322,7 @@ class MainActivity : Activity() {
             if (Prefs.rtsp.isEmpty()) startActivity(Intent(this, SettingsActivity::class.java))
             else startActivity(Intent(this, CctvActivity::class.java))
         }
-        parent.addView(box, LinearLayout.LayoutParams(0, -1, 1.5f))
+        parent.addView(box, LinearLayout.LayoutParams(dp(296), -1))
         cctv = CctvPlayer(this, cctvSurface) { cctvStatus.text = it }
     }
 
@@ -337,12 +331,8 @@ class MainActivity : Activity() {
     private fun loadWidgets() {
         val city = Prefs.city
         val country = Prefs.country
-        val league = Prefs.league
-        val rss = Prefs.rss
         fetch(weatherBody) { Data.weather(city) }
         fetch(prayerBody) { Data.prayer(city, country) }
-        fetch(footballBody) { Data.football(league) }
-        fetch(newsBody) { Data.news(rss) }
     }
 
     private fun fetch(target: TextView, job: () -> String) {
