@@ -25,6 +25,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -82,10 +83,41 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         Prefs.init(this)
         Sfx.init(this)
+        importConfig(intent)
         buildUi()
         window.decorView.viewTreeObserver.addOnGlobalFocusChangeListener { old, new ->
             if (old != null && new != null && started) Sfx.nav()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (importConfig(intent) && started) {
+            loadWidgets()
+            prepareWallpapers()
+            cctv?.start(Prefs.rtsp)
+        }
+    }
+
+    /**
+     * Mengisi setelan lewat adb tanpa mengetik di TV, contoh:
+     * adb shell "am start -n com.rafsan.tvlauncher/.MainActivity --es rtsp 'rtsp://...'"
+     * Kunci yang diterima: city, country, rss, league, rtsp, wp1, wp2, wp3.
+     */
+    private fun importConfig(intent: Intent?): Boolean {
+        val extras = intent?.extras ?: return false
+        var changed = false
+        Prefs.edit {
+            for (key in listOf("city", "country", "rss", "league", "rtsp", "wp1", "wp2", "wp3")) {
+                val value = extras.getString(key)
+                if (value != null) {
+                    putString(key, value.trim())
+                    changed = true
+                }
+            }
+        }
+        if (changed) Toast.makeText(this, "Setelan diperbarui", Toast.LENGTH_SHORT).show()
+        return changed
     }
 
     override fun onStart() {
